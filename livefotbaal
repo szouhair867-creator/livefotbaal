@@ -1,0 +1,80 @@
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+function App() {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // هاد الـ API كيجيب أهداف وماتشات حقيقية دابا من ScoreBat
+    fetch('https://www.scorebat.com/video-api/v3/feed/?token=MTY4MjI4XzE3MjExMDQ2ODNfMzA1Yzk4ZGFhNzYxN2U0ZTk0YjE1YmMyNDM0YzkxZjQ=')
+      .then((response) => response.json())
+      .then((data) => {
+        // غانخدو غير أول 10 ماتشات حقيقيين كاينين دابا
+        const realMatches = data.response.slice(0, 10).map((item, index) => {
+          // هنا كنقسمو السمية ديال الفرقتين (مثلا "Real Madrid - Barcelona")
+          const teams = item.title.split(' - ');
+          return {
+            id: index,
+            team1: teams[0] || "فريق 1",
+            team2: teams[1] || "فريق 2",
+            competition: item.competition,
+            date: new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            url: item.matchEmbedUrl // رابط د البث أو الأهداف الحقيقية
+          };
+        });
+        setMatches(realMatches);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching matches:", error);
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="App">
+      <header className="app-header">
+        <h1>Live Scores الحقيقية ⚽</h1>
+      </header>
+
+      <main className="matches-list">
+        {loading ? (
+          <div className="loading">جاري جلب الماتشات الحقيقية... 🔄</div>
+        ) : matches.length === 0 ? (
+          <div className="no-matches">ما كاين حتى شي ماتش دابا 📭</div>
+        ) : (
+          matches.map((match) => (
+            <div key={match.id} className="match-card">
+              <div className="match-status">
+                <span className="badge live">{match.competition}</span>
+              </div>
+
+              <div className="match-teams">
+                <div className="team">
+                  <span className="team-name">{match.team1}</span>
+                </div>
+                <div className="vs">VS</div>
+                <div className="team">
+                  <span className="team-name">{match.team2}</span>
+                </div>
+              </div>
+
+              <div className="match-time" style={{ textAlign: 'center', marginTop: '10px', fontSize: '14px', color: '#888' }}>
+                توقيت الماتش: {match.date}
+              </div>
+              
+              <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                <a href={match.url} target="_blank" rel="noreferrer" style={{ background: '#00ff66', color: '#000', padding: '5px 10px', borderRadius: '5px', textDecoration: 'none', fontWeight: 'bold', fontSize: '12px' }}>
+                  مشاهدة الأهداف والملخص 📺
+                </a>
+              </div>
+            </div>
+          ))
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default App;
